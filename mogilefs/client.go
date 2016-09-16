@@ -44,10 +44,9 @@ type MogileFsClient struct {
 	// The last tracker used by us - may be an empty string
 	last_tracker string
 	// Generic timeout for dial
-	dial_timeout     time.Duration
-	localConn        net.Conn
-	isInitialized    bool
-	reconnectCounter int
+	dial_timeout  time.Duration
+	localConn     net.Conn
+	isInitialized bool
 }
 
 // Optional argument to the GetPaths function

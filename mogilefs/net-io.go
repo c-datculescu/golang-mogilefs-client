@@ -25,7 +25,6 @@ import (
 	"net"
 	"net/url"
 	"regexp"
-	"time"
 )
 
 const (
@@ -54,14 +53,6 @@ func (cr *countingReader) Read(buffer []byte) (nr int, err error) {
  * @return err error last connection error if all trackers are down
  */
 func (m *MogileFsClient) getTrackerConnection() (conn net.Conn, err error) {
-	// reconnect counter more than fixed value, return to caller
-	if m.reconnectCounter > 3 {
-		return nil, errors.New("Retry time exceeded, cannot get connection")
-	}
-
-	// increment for execution
-	m.reconnectCounter++
-
 	if m.isInitialized == false {
 		for _, ignoreBlacklist := range [2]bool{false, true} {
 			for _, host := range m.trackers {
@@ -86,15 +77,7 @@ func (m *MogileFsClient) getTrackerConnection() (conn net.Conn, err error) {
 		}
 	}
 
-	// check if the tcp socket is still opened
-	m.localConn.SetReadDeadline(time.Now())
-	if _, err := m.localConn.Read([]byte(" ")); err == io.EOF {
-		m.isInitialized = false
-		m.getTrackerConnection()
-		return m.localConn, err
-	} else {
-		return m.localConn, nil
-	}
+	return m.localConn, nil
 }
 
 // Destroy closes down the socket in a ordered fashion
