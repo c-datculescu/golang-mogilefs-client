@@ -25,6 +25,7 @@ import (
 	"net"
 	"net/url"
 	"regexp"
+	"time"
 )
 
 const (
@@ -53,28 +54,52 @@ func (cr *countingReader) Read(buffer []byte) (nr int, err error) {
  * @return err error last connection error if all trackers are down
  */
 func (m *MogileFsClient) getTrackerConnection() (conn net.Conn, err error) {
+	// reconnect counter more than fixed value, return to caller
+	if m.reconnectCounter > 3 {
+		return nil, errors.New("Retry time exceeded, cannot get connection")
+	}
 
-	for _, ignoreBlacklist := range [2]bool{false, true} {
-		for _, host := range m.trackers {
-			m.last_tracker = host
+	// increment for execution
+	m.reconnectCounter++
 
-			if ignoreBlacklist == false && m.trackerIsBad(m.last_tracker) {
-				continue
-			}
+	if m.isInitialized == false {
+		for _, ignoreBlacklist := range [2]bool{false, true} {
+			for _, host := range m.trackers {
+				m.last_tracker = host
 
-			conn, err = net.DialTimeout("tcp", m.last_tracker, m.dial_timeout)
-			if err == nil {
-				// we connected to this tracker for whatever reason: it is NOT whitelisted now - it will only be
-				// whitelisted after returning a successful command or/and finishing the dead timeout
-				return
-			} else {
-				m.markTrackerAsBad(m.last_tracker)
+				if ignoreBlacklist == false && m.trackerIsBad(m.last_tracker) {
+					continue
+				}
+
+				conn, err = net.DialTimeout("tcp", m.last_tracker, m.dial_timeout)
+				if err == nil {
+					m.localConn = conn
+					m.isInitialized = true
+					m.reconnectCounter = 0
+					// we connected to this tracker for whatever reason: it is NOT whitelisted now - it will only be
+					// whitelisted after returning a successful command or/and finishing the dead timeout
+					return m.localConn, nil
+				} else {
+					m.markTrackerAsBad(m.last_tracker)
+				}
 			}
 		}
 	}
 
-	// we got an error :-(
-	return
+	// check if the tcp socket is still opened
+	m.localConn.SetReadDeadline(time.Now())
+	if _, err := m.localConn.Read([]byte(" ")); err == io.EOF {
+		m.isInitialized = false
+		m.getTrackerConnection()
+		return m.localConn, err
+	} else {
+		return m.localConn, nil
+	}
+}
+
+// Destroy closes down the socket in a ordered fashion
+func (m *MogileFsClient) Destroy() {
+	m.localConn.Close()
 }
 
 /**
@@ -87,7 +112,7 @@ func (m *MogileFsClient) returnTrackerConnection(conn net.Conn, hadError bool) {
 	} else { // else: could keepalive
 		m.markTrackerAsAlive(m.last_tracker)
 	}
-	conn.Close()
+	//conn.Close()
 }
 
 /**

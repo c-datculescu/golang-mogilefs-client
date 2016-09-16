@@ -27,6 +27,7 @@ package mogilefs
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"time"
@@ -43,7 +44,10 @@ type MogileFsClient struct {
 	// The last tracker used by us - may be an empty string
 	last_tracker string
 	// Generic timeout for dial
-	dial_timeout time.Duration
+	dial_timeout     time.Duration
+	localConn        net.Conn
+	isInitialized    bool
+	reconnectCounter int
 }
 
 // Optional argument to the GetPaths function
