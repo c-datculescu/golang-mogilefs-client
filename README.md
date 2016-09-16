@@ -26,7 +26,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/adrian-bl/golang-mogilefs-client/mogilefs"
+	"github.com/c-datculescu/golang-mogilefs-client/mogilefs"
 )
 
 func main() {
