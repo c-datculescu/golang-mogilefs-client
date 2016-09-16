@@ -10,7 +10,7 @@ Download the sourcecode
 The code is 'go gettable' and can be fetched via:
 
 ```
-$ go get github.com/adrian-bl/golang-mogilefs-client/mogilefs
+$ go get github.com/c-datculescu/golang-mogilefs-client/mogilefs
 ```
 
 This will automatically fetch and install the library into your $GOPATH directory.
