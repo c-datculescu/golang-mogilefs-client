@@ -31,6 +31,7 @@ const (
 	cmd_getpaths     = "get_paths"
 	cmd_rename       = "rename"
 	cmd_delete       = "delete"
+
 	cmd_debug        = "file_debug"
 	cmd_create_open  = "create_open"
 	cmd_create_close = "create_close"
@@ -66,7 +67,6 @@ func (m *MogileFsClient) getTrackerConnection() (conn net.Conn, err error) {
 				if err == nil {
 					m.localConn = conn
 					m.isInitialized = true
-					m.reconnectCounter = 0
 					// we connected to this tracker for whatever reason: it is NOT whitelisted now - it will only be
 					// whitelisted after returning a successful command or/and finishing the dead timeout
 					return m.localConn, nil
